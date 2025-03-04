@@ -32,7 +32,7 @@ def do_vg_evaluation(
     if cfg.TEST.INFORMATIVE:
         metric_names['relations'].extend(['informative_recall'])
     
-    metrics_map = {'recall': SGRecall, 'recall_nogc': SGNoGraphConstraintRecall, 'zeroshot_recall': SGZeroShotRecall, 'ng_zeroshot_recall': SGNGZeroShotRecall, 'informative_recall': SGInformativeRecall, 'mean_recall': SGMeanRecall, 'recall_relative': SGRecallRelative, 'mean_recall_relative': SGMeanRecallRelative, 'f1_score': SGF1Score, 'weighted_recall': SGWeightedRecall, 'weighted_mean_recall': SGWeightedMeanRecall, 'CLIPScore': CLIPScoreMatching, 'BLIPScore': BLIPScoreMatching, 'SGLIPScore': SIGLIPScoreMatching}
+    metrics_map = {'recall': SGRecall, 'recall_nogc': SGNoGraphConstraintRecall, 'zeroshot_recall': SGZeroShotRecall, 'ng_zeroshot_recall': SGNGZeroShotRecall, 'mean_recall': SGMeanRecall, 'recall_relative': SGRecallRelative, 'mean_recall_relative': SGMeanRecallRelative, 'f1_score': SGF1Score, 'weighted_recall': SGWeightedRecall, 'weighted_mean_recall': SGWeightedMeanRecall, } # 'informative_recall': SGInformativeRecall, 'CLIPScore': CLIPScoreMatching, 'BLIPScore': BLIPScoreMatching, 'SGLIPScore': SIGLIPScoreMatching}
 
     metrics_to_eval = {k: v for k,v in metrics_map.items() if k in metric_names['relations']}
     #metrics_to_eval['bbox'] = [] # 'mAP'
@@ -174,6 +174,8 @@ def do_vg_evaluation(
                     evaluator['eval_f1_score'].calculate(global_container['result_dict'], None, mode)
                     result_str += evaluator['eval_f1_score'].generate_print_string(mode)
                 result_str += '=' * 100 + '\n'
+
+                print("RESULT DICT", result_dict.keys())
 
                 global_result_dict[k]['recall'] = np.mean([np.mean(result_dict[mode + '_recall'][100]), np.mean(result_dict[mode + '_recall'][50]), np.mean(result_dict[mode + '_recall'][20])])
                 global_result_dict[k]['mean_recall'] = np.mean([np.mean(result_dict[mode + '_mean_recall'][100]), np.mean(result_dict[mode + '_mean_recall'][50]), np.mean(result_dict[mode + '_mean_recall'][20])])

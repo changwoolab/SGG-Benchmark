@@ -260,7 +260,7 @@ def train(cfg, logger, args):
         if args['use_wandb']:
             res_dict = {
                 'avg_'+cfg.METRIC_TO_TRACK+"@k": current_metric,
-                mode+'_f1': val_result[mode+"_f1"],
+                mode+'_f1_score': val_result[mode+"_f1_score"],
                 mode+'_recall': val_result[mode+"_recall"],
                 mode+'_mean_recall': val_result[mode+"_mean_recall"],
             }

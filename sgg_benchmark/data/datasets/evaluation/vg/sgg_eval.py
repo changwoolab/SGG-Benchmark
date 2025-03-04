@@ -30,12 +30,12 @@ class SGF1Score(SceneGraphEvaluation):
         super(SGF1Score, self).__init__(result_dict)
 
     def register_container(self, mode):
-        self.result_dict[mode + '_f1'] = {20: [], 50: [], 100: []}
+        self.result_dict[mode + '_f1_score'] = {20: [], 50: [], 100: []}
 
     def generate_print_string(self, mode):
         result_str = 'SGG eval: '
-        for k in self.result_dict[mode + '_f1']:
-            result_str += '    F1 @ %d: %.4f; ' % (k, self.result_dict[mode + '_f1'][k])
+        for k in self.result_dict[mode + '_f1_score']:
+            result_str += '    F1 @ %d: %.4f; ' % (k, self.result_dict[mode + '_f1_score'][k])
         result_str += ' for mode=%s, type=F1.' % mode
         result_str += '\n'
         return result_str
@@ -49,7 +49,7 @@ class SGF1Score(SceneGraphEvaluation):
                 f1 = 2 * recall_k * mean_reacall_k / (recall_k + mean_reacall_k)
             else:
                 f1 = 0
-            self.result_dict[mode + '_f1'][k] = f1
+            self.result_dict[mode + '_f1_score'][k] = f1
 
 class SGRecallRelative(SceneGraphEvaluation):
     def __init__(self, result_dict):
@@ -145,201 +145,201 @@ class SGMeanRecallRelative(SceneGraphEvaluation):
         self.result_dict[mode + '_mean_recall_relative']['relative'] = sum_recall / float(num_rel_no_bg)
         return
 
-class SGInformativeRecallWeighted(SceneGraphEvaluation):
-    def __init__(self, result_dict, sim='mpnet'):
-        super(SGInformativeRecall, self).__init__(result_dict)
+# class SGInformativeRecallWeighted(SceneGraphEvaluation):
+#     def __init__(self, result_dict, sim='mpnet'):
+#         super(SGInformativeRecall, self).__init__(result_dict)
 
-        self.sim_options = ['glove', 'uae_large', 'bert_large', 'minilm', 'mpnet', 'clip']
-        if sim not in self.sim_options:
-            raise ValueError('sim must be in %s' % self.sim_options)
-        self.similarity = sim
+#         self.sim_options = ['glove', 'uae_large', 'bert_large', 'minilm', 'mpnet', 'clip']
+#         if sim not in self.sim_options:
+#             raise ValueError('sim must be in %s' % self.sim_options)
+#         self.similarity = sim
 
-        # load embeddings according to similarity value
-        if self.similarity == 'glove':
-            self.sim_model = SentenceTransformer('average_word_embeddings_glove.6B.300d')
-        elif self.similarity == 'uae_large':
-            self.sim_model = SentenceTransformer('WhereIsAI/UAE-Large-V1')
-        elif self.similarity == 'bert_large':
-            self.sim_model = SentenceTransformer('bert-large-nli-mean-tokens')
-        elif self.similarity == 'minilm':
-            self.sim_model = SentenceTransformer('all-MiniLM-L12-v2')
-        elif self.similarity == "mpnet":
-            self.sim_model = SentenceTransformer('all-mpnet-base-v2')
-        elif self.similarity == "clip":
-            self.sim_model = SentenceTransformer('CLIP-ViT-B-32')
+#         # load embeddings according to similarity value
+#         if self.similarity == 'glove':
+#             self.sim_model = SentenceTransformer('average_word_embeddings_glove.6B.300d')
+#         elif self.similarity == 'uae_large':
+#             self.sim_model = SentenceTransformer('WhereIsAI/UAE-Large-V1')
+#         elif self.similarity == 'bert_large':
+#             self.sim_model = SentenceTransformer('bert-large-nli-mean-tokens')
+#         elif self.similarity == 'minilm':
+#             self.sim_model = SentenceTransformer('all-MiniLM-L12-v2')
+#         elif self.similarity == "mpnet":
+#             self.sim_model = SentenceTransformer('all-mpnet-base-v2')
+#         elif self.similarity == "clip":
+#             self.sim_model = SentenceTransformer('CLIP-ViT-B-32')
 
-    def register_container(self, mode):
-        self.result_dict[mode + '_informative_recall'] = {100: []} # 5: [], 10: [], 20: [], 50: [], 
+#     def register_container(self, mode):
+#         self.result_dict[mode + '_informative_recall'] = {100: []} # 5: [], 10: [], 20: [], 50: [], 
 
-    def generate_print_string(self, mode):
-        result_str = 'SGG eval: '
-        for k, v in self.result_dict[mode + '_informative_recall'].items():
-            result_str += '    IR @ %d: %.4f; ' % (k, np.mean(v))
-        result_str += ' for mode=%s, type=Informative Recall.' % mode
-        result_str += '\n'
-        return result_str
+#     def generate_print_string(self, mode):
+#         result_str = 'SGG eval: '
+#         for k, v in self.result_dict[mode + '_informative_recall'].items():
+#             result_str += '    IR @ %d: %.4f; ' % (k, np.mean(v))
+#         result_str += ' for mode=%s, type=Informative Recall.' % mode
+#         result_str += '\n'
+#         return result_str
     
-    def similarity_match(self, gt_triplets, pred_triplets, cosine_thres=0.9):
-        pred_to_gt = [[] for _ in range(len(pred_triplets))]
+#     def similarity_match(self, gt_triplets, pred_triplets, cosine_thres=0.9):
+#         pred_to_gt = [[] for _ in range(len(pred_triplets))]
 
-        if len(gt_triplets) == 0 or len(pred_triplets) == 0:
-            return pred_to_gt
+#         if len(gt_triplets) == 0 or len(pred_triplets) == 0:
+#             return pred_to_gt
 
-        gt_triplets_embeddings = self.sim_model.encode(gt_triplets)
-        pred_triplets_embeddings = self.sim_model.encode(pred_triplets)
+#         gt_triplets_embeddings = self.sim_model.encode(gt_triplets)
+#         pred_triplets_embeddings = self.sim_model.encode(pred_triplets)
 
-        # Compute cosine similarity for all combinations at once
-        cos_sim_matrix = util.cos_sim(pred_triplets_embeddings, gt_triplets_embeddings)
+#         # Compute cosine similarity for all combinations at once
+#         cos_sim_matrix = util.cos_sim(pred_triplets_embeddings, gt_triplets_embeddings)
 
-        # Iterate over each pred_triplet's cosine similarity scores
-        for i, cos_sim_scores in enumerate(cos_sim_matrix):
-            # Find the index of the maximum cosine similarity score for the current pred_triplet
-            max_sim_score, max_index = torch.max(cos_sim_scores, dim=0)
+#         # Iterate over each pred_triplet's cosine similarity scores
+#         for i, cos_sim_scores in enumerate(cos_sim_matrix):
+#             # Find the index of the maximum cosine similarity score for the current pred_triplet
+#             max_sim_score, max_index = torch.max(cos_sim_scores, dim=0)
 
-            # If the highest cosine similarity score is above the threshold, consider it a match
-            if max_sim_score > cosine_thres:
-                pred_to_gt[i].append(max_index.item())
+#             # If the highest cosine similarity score is above the threshold, consider it a match
+#             if max_sim_score > cosine_thres:
+#                 pred_to_gt[i].append(max_index.item())
 
-        return pred_to_gt
+#         return pred_to_gt
 
-    def calculate(self, global_container, local_container, mode):
-        pred_rel_inds = local_container['pred_rel_inds']
-        rel_scores = local_container['rel_scores']
-        pred_classes = local_container['pred_classes']
-        pred_boxes = local_container['pred_boxes']
-        obj_scores = local_container['obj_scores']
+#     def calculate(self, global_container, local_container, mode):
+#         pred_rel_inds = local_container['pred_rel_inds']
+#         rel_scores = local_container['rel_scores']
+#         pred_classes = local_container['pred_classes']
+#         pred_boxes = local_container['pred_boxes']
+#         obj_scores = local_container['obj_scores']
 
-        gt_relationships = local_container['informative_rels']
+#         gt_relationships = local_container['informative_rels']
 
-        pred_rels = np.column_stack((pred_rel_inds, 1+rel_scores[:,1:].argmax(1)))
-        pred_scores = rel_scores[:,1:].max(1)
+#         pred_rels = np.column_stack((pred_rel_inds, 1+rel_scores[:,1:].argmax(1)))
+#         pred_scores = rel_scores[:,1:].max(1)
 
-        pred_triplets, pred_triplet_boxes, pred_triplet_scores = _triplet(pred_rels, pred_classes, pred_boxes, pred_scores, obj_scores)
+#         pred_triplets, pred_triplet_boxes, pred_triplet_scores = _triplet(pred_rels, pred_classes, pred_boxes, pred_scores, obj_scores)
 
-        pred_triplets = [str(global_container['ind_to_classes'][triplet[0]]) + " "+ str(global_container['ind_to_predicates'][triplet[1]]) + " "+ str(global_container['ind_to_classes'][triplet[2]]) for triplet in pred_triplets]
+#         pred_triplets = [str(global_container['ind_to_classes'][triplet[0]]) + " "+ str(global_container['ind_to_predicates'][triplet[1]]) + " "+ str(global_container['ind_to_classes'][triplet[2]]) for triplet in pred_triplets]
 
-        pred_to_gt = self.similarity_match(gt_relationships, pred_triplets, cosine_thres=0.9)
+#         pred_to_gt = self.similarity_match(gt_relationships, pred_triplets, cosine_thres=0.9)
 
-        for k in self.result_dict[mode + '_informative_recall']:
-            weighted_sum = 0
-            # get indices of pred_to_gt that are not empty
-            indices = [i for i, x in enumerate(pred_to_gt[:k]) if x]
-            # apply a lambda function to remove the number of previous items in the list, such that a perfect ranking = 0
-            indices = list(map(lambda x, y: x - y, indices, range(len(indices))))
-            for idx in indices:
-                # Compute weight for the current position
-                weight = self.weight_function(idx, k)
-                # Add weighted match to the weighted sum
-                weighted_sum += weight 
+#         for k in self.result_dict[mode + '_informative_recall']:
+#             weighted_sum = 0
+#             # get indices of pred_to_gt that are not empty
+#             indices = [i for i, x in enumerate(pred_to_gt[:k]) if x]
+#             # apply a lambda function to remove the number of previous items in the list, such that a perfect ranking = 0
+#             indices = list(map(lambda x, y: x - y, indices, range(len(indices))))
+#             for idx in indices:
+#                 # Compute weight for the current position
+#                 weight = self.weight_function(idx, k)
+#                 # Add weighted match to the weighted sum
+#                 weighted_sum += weight 
 
-            # Normalize the weighted recall score
-            rec_i_weighted = weighted_sum / len(gt_relationships)
-            self.result_dict[mode + '_informative_recall'][k].append(rec_i_weighted)
+#             # Normalize the weighted recall score
+#             rec_i_weighted = weighted_sum / len(gt_relationships)
+#             self.result_dict[mode + '_informative_recall'][k].append(rec_i_weighted)
 
-        return local_container
+#         return local_container
     
-    def weight_function(self, position, max_position, mode="linear"):
-        if mode == "linear":
-            return (max_position - position) / max_position
-        if mode == "log": # normalized log
-            return np.log(max_position - position + 1) / np.log(max_position + 1)
+#     def weight_function(self, position, max_position, mode="linear"):
+#         if mode == "linear":
+#             return (max_position - position) / max_position
+#         if mode == "log": # normalized log
+#             return np.log(max_position - position + 1) / np.log(max_position + 1)
 
 
-class SGInformativeRecall(SceneGraphEvaluation):
-    def __init__(self, result_dict, sim='mpnet'):
-        super(SGInformativeRecall, self).__init__(result_dict)
+# class SGInformativeRecall(SceneGraphEvaluation):
+#     def __init__(self, result_dict, sim='mpnet'):
+#         super(SGInformativeRecall, self).__init__(result_dict)
 
-        self.sim_options = ['glove', 'uae_large', 'bert_large', 'minilm', 'mpnet', 'clip']
-        if sim not in self.sim_options:
-            raise ValueError('sim must be in %s' % self.sim_options)
-        self.similarity = sim
+#         self.sim_options = ['glove', 'uae_large', 'bert_large', 'minilm', 'mpnet', 'clip']
+#         if sim not in self.sim_options:
+#             raise ValueError('sim must be in %s' % self.sim_options)
+#         self.similarity = sim
 
-        # load embeddings according to similarity value
-        if self.similarity == 'glove':
-            self.sim_model = SentenceTransformer('average_word_embeddings_glove.6B.300d')
-        elif self.similarity == 'uae_large':
-            self.sim_model = SentenceTransformer('WhereIsAI/UAE-Large-V1')
-        elif self.similarity == 'bert_large':
-            self.sim_model = SentenceTransformer('bert-large-nli-mean-tokens')
-        elif self.similarity == 'minilm':
-            self.sim_model = SentenceTransformer('all-MiniLM-L6-v2')
-        elif self.similarity == "mpnet":
-            self.sim_model = SentenceTransformer('all-mpnet-base-v2')
-        elif self.similarity == "clip":
-            self.sim_model = SentenceTransformer('CLIP-ViT-B-32')
+#         # load embeddings according to similarity value
+#         if self.similarity == 'glove':
+#             self.sim_model = SentenceTransformer('average_word_embeddings_glove.6B.300d')
+#         elif self.similarity == 'uae_large':
+#             self.sim_model = SentenceTransformer('WhereIsAI/UAE-Large-V1')
+#         elif self.similarity == 'bert_large':
+#             self.sim_model = SentenceTransformer('bert-large-nli-mean-tokens')
+#         elif self.similarity == 'minilm':
+#             self.sim_model = SentenceTransformer('all-MiniLM-L6-v2')
+#         elif self.similarity == "mpnet":
+#             self.sim_model = SentenceTransformer('all-mpnet-base-v2')
+#         elif self.similarity == "clip":
+#             self.sim_model = SentenceTransformer('CLIP-ViT-B-32')
 
-    def register_container(self, mode):
-        self.result_dict[mode + '_informative_recall'] = {5: [], 10: [], 20: [], 50: [], 100: []}
+#     def register_container(self, mode):
+#         self.result_dict[mode + '_informative_recall'] = {5: [], 10: [], 20: [], 50: [], 100: []}
 
-    def generate_print_string(self, mode):
-        result_str = 'SGG eval: '
-        for k, v in self.result_dict[mode + '_informative_recall'].items():
-            result_str += '    IR @ %d: %.4f; ' % (k, np.mean(v))
-        result_str += ' for mode=%s, type=Informative Recall.' % mode
-        result_str += '\n'
-        return result_str
+#     def generate_print_string(self, mode):
+#         result_str = 'SGG eval: '
+#         for k, v in self.result_dict[mode + '_informative_recall'].items():
+#             result_str += '    IR @ %d: %.4f; ' % (k, np.mean(v))
+#         result_str += ' for mode=%s, type=Informative Recall.' % mode
+#         result_str += '\n'
+#         return result_str
 
-    def similarity_match(self, gt_triplets, pred_triplets, cosine_thres=0.8):
-        """
-        Perform cosine similarity between gt_triplets list of strings and pred_triplets list of strings
-        For each pred_triplet, find the gt_triplet with the highest cosine similarity score
-        If the highest cosine similarity score is above a threshold, then consider the pred_triplet to be a match
-        Return:
-            pred_to_gt [List of List]
-        """
-        pred_to_gt = [[] for _ in range(len(pred_triplets))]
+#     def similarity_match(self, gt_triplets, pred_triplets, cosine_thres=0.8):
+#         """
+#         Perform cosine similarity between gt_triplets list of strings and pred_triplets list of strings
+#         For each pred_triplet, find the gt_triplet with the highest cosine similarity score
+#         If the highest cosine similarity score is above a threshold, then consider the pred_triplet to be a match
+#         Return:
+#             pred_to_gt [List of List]
+#         """
+#         pred_to_gt = [[] for _ in range(len(pred_triplets))]
 
-        if len(gt_triplets) == 0 or len(pred_triplets) == 0:
-            return pred_to_gt
+#         if len(gt_triplets) == 0 or len(pred_triplets) == 0:
+#             return pred_to_gt
 
-        gt_triplets_embeddings = self.sim_model.encode(gt_triplets, batch_size=256, device='cuda')
-        pred_triplets_embeddings = self.sim_model.encode(pred_triplets, batch_size=256, device='cuda')
+#         gt_triplets_embeddings = self.sim_model.encode(gt_triplets, batch_size=256, device='cuda')
+#         pred_triplets_embeddings = self.sim_model.encode(pred_triplets, batch_size=256, device='cuda')
 
-        # Compute cosine similarity for all combinations at once
-        cos_sim_matrix = util.cos_sim(pred_triplets_embeddings, gt_triplets_embeddings)
+#         # Compute cosine similarity for all combinations at once
+#         cos_sim_matrix = util.cos_sim(pred_triplets_embeddings, gt_triplets_embeddings)
 
-        # Iterate over each pred_triplet's cosine similarity scores
-        for i, cos_sim_scores in enumerate(cos_sim_matrix):
-            # Find the index of the maximum cosine similarity score for the current pred_triplet
-            max_sim_score, max_index = torch.max(cos_sim_scores, dim=0)
+#         # Iterate over each pred_triplet's cosine similarity scores
+#         for i, cos_sim_scores in enumerate(cos_sim_matrix):
+#             # Find the index of the maximum cosine similarity score for the current pred_triplet
+#             max_sim_score, max_index = torch.max(cos_sim_scores, dim=0)
 
-            # If the highest cosine similarity score is above the threshold, consider it a match
-            if max_sim_score > cosine_thres:
-                pred_to_gt[i].append(max_index.item())
+#             # If the highest cosine similarity score is above the threshold, consider it a match
+#             if max_sim_score > cosine_thres:
+#                 pred_to_gt[i].append(max_index.item())
 
-        return pred_to_gt
+#         return pred_to_gt
 
-    def calculate(self, global_container, local_container, mode):
-        pred_rel_inds = local_container['pred_rel_inds']
-        rel_scores = local_container['rel_scores']
-        pred_classes = local_container['pred_classes']
-        pred_boxes = local_container['pred_boxes']
-        obj_scores = local_container['obj_scores']
+#     def calculate(self, global_container, local_container, mode):
+#         pred_rel_inds = local_container['pred_rel_inds']
+#         rel_scores = local_container['rel_scores']
+#         pred_classes = local_container['pred_classes']
+#         pred_boxes = local_container['pred_boxes']
+#         obj_scores = local_container['obj_scores']
 
-        gt_relationships = local_container['informative_rels']
+#         gt_relationships = local_container['informative_rels']
 
-        pred_rels = np.column_stack((pred_rel_inds, 1+rel_scores[:,1:].argmax(1)))
-        pred_scores = rel_scores[:,1:].max(1)
+#         pred_rels = np.column_stack((pred_rel_inds, 1+rel_scores[:,1:].argmax(1)))
+#         pred_scores = rel_scores[:,1:].max(1)
 
-        pred_triplets, _, _ = _triplet(pred_rels, pred_classes, pred_boxes, pred_scores, obj_scores)
+#         pred_triplets, _, _ = _triplet(pred_rels, pred_classes, pred_boxes, pred_scores, obj_scores)
 
-        pred_triplets = [str(global_container['ind_to_classes'][triplet[0]]) + " "+ str(global_container['ind_to_predicates'][triplet[1]]) + " "+ str(global_container['ind_to_classes'][triplet[2]]) for triplet in pred_triplets]
+#         pred_triplets = [str(global_container['ind_to_classes'][triplet[0]]) + " "+ str(global_container['ind_to_predicates'][triplet[1]]) + " "+ str(global_container['ind_to_classes'][triplet[2]]) for triplet in pred_triplets]
 
-        pred_to_gt = self.similarity_match(gt_relationships, pred_triplets, cosine_thres=0.8)
+#         pred_to_gt = self.similarity_match(gt_relationships, pred_triplets, cosine_thres=0.8)
 
-        for k in self.result_dict[mode + '_informative_recall']:
-            # check if pred_to_gt_inf is empty
-            if all(len(x) == 0 for x in pred_to_gt):
-                rec_i = 0.0
-            else:
-                match = reduce(np.union1d, pred_to_gt[:k])
-                if len(gt_relationships) > 0 and len(match) > 0:
-                    rec_i = float(len(match)) / float(len(gt_relationships))
-                else:
-                    rec_i = 0.0
-                self.result_dict[mode + '_informative_recall'][k].append(rec_i)
+#         for k in self.result_dict[mode + '_informative_recall']:
+#             # check if pred_to_gt_inf is empty
+#             if all(len(x) == 0 for x in pred_to_gt):
+#                 rec_i = 0.0
+#             else:
+#                 match = reduce(np.union1d, pred_to_gt[:k])
+#                 if len(gt_relationships) > 0 and len(match) > 0:
+#                     rec_i = float(len(match)) / float(len(gt_relationships))
+#                 else:
+#                     rec_i = 0.0
+#                 self.result_dict[mode + '_informative_recall'][k].append(rec_i)
 
-        return local_container
+#         return local_container
 
 """
 Traditional Recall, implement based on:
